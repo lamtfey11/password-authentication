@@ -45,6 +45,7 @@ class App(tk.Tk):
 
     # вход
     def login(self):
+        self._end_session() 
         name = ""
         while True:
             res = LoginDialog(self, name).show()
@@ -94,6 +95,12 @@ class App(tk.Tk):
             self._start_session(acc)
             return
 
+    def _end_session(self):
+        self.current = None
+        for label in ("Смена пароля", "Новый пользователь", "Все пользователи"):
+            self.menu_users.entryconfig(label, state="disabled")
+        self.status.config(text="Вход не выполнен")
+
     def _start_session(self, acc):
         self.current = acc.name
         self.attempts = 0
@@ -102,7 +109,6 @@ class App(tk.Tk):
         state = "normal" if is_admin else "disabled"
         self.menu_users.entryconfig("Новый пользователь", state=state)
         self.menu_users.entryconfig("Все пользователи", state=state)
-        self.btn_login.place_forget()
         self.status.config(text="Пользователь: %s (%s)" % (
             acc.name, "администратор" if is_admin else "обычный пользователь"))
 
