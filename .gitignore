@@ -1,0 +1,24 @@
+# Файл учётных записей (содержит пароли в открытом виде!)
+security.db
+
+# Python
+__pycache__/
+*.py[cod]
+*.egg-info/
+build/
+dist/
+
+# Виртуальные окружения
+.venv/
+venv/
+env/
+
+# IDE и редакторы
+.vscode/
+.idea/
+*.swp
+*~
+
+# Системные файлы
+.DS_Store
+Thumbs.db
