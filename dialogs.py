@@ -6,6 +6,8 @@ from password_rules import REQUIREMENTS, check_password
 
 
 class Dialog(tk.Toplevel):
+    """Базовый модальный диалог с кнопками «OK» и «Отмена»."""
+
     def __init__(self, parent, title):
         super().__init__(parent)
         self.parent = parent
@@ -66,6 +68,8 @@ class Dialog(tk.Toplevel):
 
 
 class LoginDialog(Dialog):
+    """Окно входа. Результат: (имя, пароль) или None."""
+
     def __init__(self, parent, name=""):
         self.init_name = name
         super().__init__(parent, "Вход в систему")
@@ -91,7 +95,52 @@ class LoginDialog(Dialog):
         self.result = (self.e_name.get().strip(), self.e_pass.get())
 
 
+class PassphraseDialog(Dialog):
+    """
+    Окно запроса парольной фразы для расшифровки файла учётных данных
+    (лаба №3, «Form6» из методички). Результат: строка или None.
+    confirm=True — дополнительное поле подтверждения (при создании файла).
+    """
+
+    def __init__(self, parent, prompt, confirm=False):
+        self.prompt = prompt
+        self.confirm = confirm
+        super().__init__(parent, "Парольная фраза")
+
+    def build(self, body):
+        tk.Label(body, text=self.prompt, wraplength=280, justify="left").grid(
+            row=0, column=0, sticky="w", pady=(0, 10))
+        self.e_pass = tk.Entry(body, width=32, show="*")
+        self.e_pass.grid(row=1, column=0, pady=(0, 8) if self.confirm else 0)
+        self.e_conf = None
+        if self.confirm:
+            tk.Label(body, text="Подтверждение:").grid(row=2, column=0, sticky="w")
+            self.e_conf = tk.Entry(body, width=32, show="*")
+            self.e_conf.grid(row=3, column=0)
+        self.initial_focus = self.e_pass
+
+    def validate(self):
+        pw = self.e_pass.get()
+        if not pw:
+            messagebox.showwarning("Парольная фраза", "Введите парольную фразу.", parent=self)
+            return False
+        if self.confirm and pw != self.e_conf.get():
+            self.e_conf.delete(0, "end")
+            messagebox.showerror("Парольная фраза", "Парольные фразы не совпадают!", parent=self)
+            return False
+        return True
+
+    def apply(self):
+        self.result = self.e_pass.get()
+
+
 class PasswordDialog(Dialog):
+    """
+    Окно смены пароля. Результат: новый пароль или None.
+    ask_old=True — запрашивать и проверять старый пароль;
+    first=True   — первый вход пользователя (пароль ещё не задан).
+    """
+
     def __init__(self, parent, account, ask_old, first=False):
         self.account = account
         self.ask_old = ask_old
@@ -152,6 +201,8 @@ class PasswordDialog(Dialog):
 
 
 class AddUserDialog(Dialog):
+    """Добавление пользователя. Результат: (имя, блокировка, ограничения) или None."""
+
     def __init__(self, parent, store):
         self.store = store
         super().__init__(parent, "Добавление пользователя")
@@ -190,6 +241,8 @@ class AddUserDialog(Dialog):
 
 
 class UsersDialog(Dialog):
+    """Просмотр и редактирование учётных записей («Предыдущий» / «Следующий»)."""
+
     def __init__(self, parent, store):
         self.store = store
         self.accounts = store.read_all()
@@ -247,6 +300,7 @@ class UsersDialog(Dialog):
         self.store.write(self.cur, a)
 
     def _confirm_leave(self):
+        """False — пользователь отменил переход/закрытие."""
         if not self._dirty():
             return True
         ans = messagebox.askyesnocancel(

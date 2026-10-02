@@ -1,17 +1,19 @@
 import tkinter as tk
 from tkinter import messagebox
 
-from config import ADMIN, AUTHOR, MAX_ATTEMPTS, SECFILE, VARIANT, VARIANT_TEXT
+from config import ADMIN, AUTHOR, LAB3_VARIANT, LAB3_VARIANT_TEXT, MAX_ATTEMPTS, VARIANT, VARIANT_TEXT
 from dialogs import AddUserDialog, LoginDialog, PasswordDialog, UsersDialog
 from storage import Account, AccountFile
 
 
 class App(tk.Tk):
-    def __init__(self):
+    def __init__(self, secfile):
+        """secfile — путь к (расшифрованному) файлу учётных записей,
+        подготовленному в main.py до запуска главного окна."""
         super().__init__()
-        self.title("Работы №1")
+        self.title("Работы №1,3")
         self.geometry("640x480")
-        self.store = AccountFile(SECFILE)
+        self.store = AccountFile(secfile)
         try:
             self.store.ensure_exists()
         except OSError as e:
@@ -45,7 +47,6 @@ class App(tk.Tk):
 
     # вход
     def login(self):
-        self._end_session() 
         name = ""
         while True:
             res = LoginDialog(self, name).show()
@@ -95,12 +96,6 @@ class App(tk.Tk):
             self._start_session(acc)
             return
 
-    def _end_session(self):
-        self.current = None
-        for label in ("Смена пароля", "Новый пользователь", "Все пользователи"):
-            self.menu_users.entryconfig(label, state="disabled")
-        self.status.config(text="Вход не выполнен")
-
     def _start_session(self, acc):
         self.current = acc.name
         self.attempts = 0
@@ -109,6 +104,7 @@ class App(tk.Tk):
         state = "normal" if is_admin else "disabled"
         self.menu_users.entryconfig("Новый пользователь", state=state)
         self.menu_users.entryconfig("Все пользователи", state=state)
+        self.btn_login.place_forget()
         self.status.config(text="Пользователь: %s (%s)" % (
             acc.name, "администратор" if is_admin else "обычный пользователь"))
 
@@ -140,9 +136,13 @@ class App(tk.Tk):
     def about(self):
         messagebox.showinfo(
             "О программе",
-            "Лабораторная работа №1\n"
-            "Разграничение полномочий пользователей на основе парольной аутентификации\n\n"
-            "Автор: %s\nВариант задания: %d\n%s" % (AUTHOR, VARIANT, VARIANT_TEXT),
+            "Лабораторные работы №1, №3\n"
+            "Разграничение полномочий пользователей на основе парольной аутентификации;\n"
+            "защита файла учётных данных шифрованием\n\n"
+            "Автор: %s\n\n"
+            "Вариант задания (пароли): %d\n%s\n\n"
+            "Вариант задания (шифрование файла): %d\n%s" % (
+                AUTHOR, VARIANT, VARIANT_TEXT, LAB3_VARIANT, LAB3_VARIANT_TEXT),
             parent=self)
 
     def report_callback_exception(self, exc, val, tb):

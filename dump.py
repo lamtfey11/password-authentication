@@ -1,15 +1,22 @@
-import struct
+import sys
+sys.path.insert(0, ".")  # запускать из папки проекта
+import getpass
 
-REC = struct.Struct("<80si128s??")   # имя | длина пароля | пароль | блокировка | ограничения
+import secure_file
+import storage
+from config import ENCFILE
 
-data = open("security.db", "rb").read()
-print("Размер: %d байт, записей: %d\n" % (len(data), len(data) // REC.size))
+passphrase = getpass.getpass("Парольная фраза: ")
+plain = secure_file.load(ENCFILE, passphrase)
 
-for i in range(0, len(data), REC.size):
-    name, passlen, pw, block, restrict = REC.unpack(data[i:i + REC.size])
-    print("Запись %d:" % (i // REC.size + 1))
-    print("  имя:         ", name.rstrip(b"\0").decode("utf-8"))
-    print("  длина пароля:", passlen)
-    print("  пароль:      ", pw.rstrip(b"\0").decode("utf-8"))
-    print("  блокировка:  ", block)
-    print("  ограничения: ", restrict)
+if plain is None:
+    print("Неверная парольная фраза или файл повреждён.")
+else:
+    accounts = storage.parse_accounts(plain)
+    print("Записей: %d\n" % len(accounts))
+    for i, a in enumerate(accounts, 1):
+        print("Запись %d:" % i)
+        print("  имя:         ", a.name)
+        print("  пароль:      ", a.password)
+        print("  блокировка:  ", a.block)
+        print("  ограничения: ", a.restrict)
